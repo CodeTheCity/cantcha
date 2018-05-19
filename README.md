@@ -1,6 +1,6 @@
 # cantcha
 
-A mini-project developed at [Code The City 13](https://github.com/CodeTheCity/CTC13)) - Hacking Our Relationship With Alcohol.
+A mini-project developed at [Code The City 13](https://github.com/CodeTheCity/CTC13) - Hacking Our Relationship With Alcohol.
 
 ## Aim
 
