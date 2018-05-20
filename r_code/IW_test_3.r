@@ -4,6 +4,7 @@ library(readr)
 library (dplyr)
 library (tidyr)
 library(caret)
+library(ggplot2)
 
 cantcha <- read_csv("data/Cantcha Data Gather (Responses) - Form Responses 1.csv")
 
@@ -44,6 +45,7 @@ sample_pc <- 0.5
 df_pc <- df[sample(nrow(df), nrow(df) * sample_pc / 100), ]
 nrow(df_pc)
 
+barplot(df$label, col = df$label)
 
 
 #<begin>=====================================
@@ -112,9 +114,9 @@ summary(mdl$results)
 TestRes <- predict(mdl, newdata = reduced[,-5], type="raw")
 confusionMatrix(TestRes, reduced$label)
 
-
-# Set impression as the label
-
+################################
+# Set impression as the label  #
+################################
 drop.cols <- c('Timestamp', 'Photo', "Drink_name", "label")
 reduced.1 <- df %>% select(-one_of(drop.cols))
 reduced.1$Impression <- as.factor(reduced.1$Impression)
@@ -164,10 +166,9 @@ summary(mdl$results)
 # Accuracy was used to select the optimal model using  the largest value.
 # The final values used for the model were trials = 20, model = tree and winnow = FALSE.
 
-# visualize the resample distributions
-xyplot(mdl,type = c("g", "p", "smooth"))
 
 # Testing the previous model on the testing set	
 TestRes <- predict(mdl, newdata = reduced.1[,-5], type="raw")
 confusionMatrix(TestRes, reduced.1$Impression)
 table(TestRes, reduced.1$Impression)
+
