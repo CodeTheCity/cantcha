@@ -1,10 +1,11 @@
-
-
+# Creating the Cancha Classifier
 library(readr)
 library (dplyr)
 library (tidyr)
 library(caret)
 library(ggplot2)
+
+# Import the synthesized data
 
 cantcha <- read_csv("data/Cantcha Data Gather (Responses) - Form Responses 1.csv")
 
@@ -31,6 +32,7 @@ cat("There are ", num_class, "unique classes, which are", uniqueClasses)
 classDis<- as.data.frame(table(df$label))
 names(classDis) <- c("label","count") 
 classDis
+barplot(classDis)
 
 #check that they all add up
 sr <- sum(classDis$count) 
@@ -121,6 +123,8 @@ drop.cols <- c('Timestamp', 'Photo', "Drink_name", "label")
 reduced.1 <- df %>% select(-one_of(drop.cols))
 reduced.1$Impression <- as.factor(reduced.1$Impression)
 levels(reduced.1$Impression) <- c( "Clearly Alcohol",  "Clearly non-alcoholic", "Probably Alcohol", "Probably non-alcoholic", "Really can't tell" )
+
+barplot(reduced.1$Impression)
 # test three algorithms
 
 ctrl <- trainControl(method="repeatedcv", number=10, repeats=3)
