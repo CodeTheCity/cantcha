@@ -31,6 +31,8 @@ cat("There are ", num_class, "unique classes, which are", uniqueClasses)
 drop.cols <- c('Timestamp', 'Photo', 'Name', "not_class", "ex_class") 
 reduced_df <- df2 %>% select(-one_of(drop.cols))
 
+# 
+reduced_df[["class"]] = factor(reduced_df[["class"]])
 #class distribution
 classDis<- as.data.frame(table(reduced_df$class))
 names(classDis) <- c("label","count") 
@@ -66,54 +68,42 @@ classDis<- as.data.frame(table(trainA$class))
 names(classDis) <- c("label","count") 
 classDis
 
+# The following code is inspired by the following two articles
+# http://dataaspirant.com/2017/01/19/support-vector-machine-classifier-implementation-r-caret-package/ 
+# and http://blog.revolutionanalytics.com/2015/10/the-5th-tribe-support-vector-machines-and-caret.html 
 
-ctrl <- trainControl(method="repeatedcv", number=10, repeats=3)
-# tested c5.0, SVM and KNN - with C5.0 performing on traning set best. 
-#C5.0Tree
-set.seed(1)
-mod.c5Tree <- train(class~., data=trainA, method="C5.0Tree", trControl=ctrl)
-# svmRadial
-set.seed(1)
-mod.svm <- train(class~., data=trainA, method="svmRadial", trControl=ctrl)
-# kNN
-set.seed(1)
-mod.knn <- train(class~., data=trainA, method="knn", trControl=ctrl)
+trctrl <- trainControl(method = "repeatedcv", number = 10, repeats = 3)
+set.seed(135)
+
+svm_Radial <- train(class ~., data = trainA, method = "svmRadial",
+                    trControl=trctrl,
+                    preProcess = c("center", "scale"),
+                    tuneLength = 10)
+
+svm_Radial
+
+test_pred <- predict(svm_Radial, newdata = testA)
+test_pred
 
 
-# collect resamples
-results <- resamples(list(C5.0Tree=mod.c5Tree, svm=mod.svm, kNN=mod.knn))
+confusionMatrix(test_pred, testA$class )
 
-scales <- list(x=list(relation="free"), y=list(relation= "free"))
-dotplot(results, scales=scales, conf.level = 0.95)
+# tune the model
+grid <- expand.grid(sigma = c(.1, 0.2, 0.25, 0.3), C = c(0,0.01, 0.05, 0.1, 0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2,4, 5))
 
-#Try to improve C50
-#========================================
-# now tune the model
-library(caret)
-library(C50)
-library(mlbench)
-fitControl <- trainControl(method = "repeatedcv",
-                           number = 10,
-                           repeats = 10, returnResamp="all")
-# Choose the features and classes
-data(trainA)
-x <- trainA[, 1:4]
-y <- trainA$class
-grid <- expand.grid( .winnow = c(TRUE,FALSE), .trials=c(1,5,10,15,20), .model="tree" )
-mdl<- train(x=x,y=y,tuneGrid=grid,trControl=fitControl,method="C5.0",verbose=FALSE)
-mdl
-#show which attributes were most used
+set.seed(135)
+svm_Radial_Grid <- train(class ~., data = trainA, method = "svmRadial",
+                           trControl=trctrl,
+                           preProcess = c("center", "scale"),
+                           tuneGrid = grid,
+                           tuneLength = 10)
 
-summary(mdl$finalModel)
-summary(mdl$results)
+svm_Radial_Grid
 
-# Tuning parameter 'model' was held constant at a value of tree
-# Accuracy was used to select the optimal model using  the largest value.
-# The final values used for the model were trials = 20, model = tree and winnow = FALSE.
+plot(svm_Radial_Grid)
 
-# visualize the resample distributions
-xyplot(mdl,type = c("g", "p", "smooth"))
+#Now test the runed model on test data
+test_svm_Radial_Grid <- predict(svm_Radial_Grid, newdata = testA)
 
-# Testing the previous model on the testing set	
-TestRes <- predict(mdl, newdata = testA, type="raw")
-confusionMatrix(TestRes, testA$class)
+confusionMatrix(test_svm_Radial_Grid, testA$class )
+
