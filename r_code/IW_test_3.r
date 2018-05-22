@@ -1,9 +1,11 @@
-
-
+# Creating the Cancha Classifier
 library(readr)
 library (dplyr)
 library (tidyr)
 library(caret)
+library(ggplot2)
+
+# Import the synthesized data
 
 cantcha <- read_csv("data/Cantcha Data Gather (Responses) - Form Responses 1.csv")
 
@@ -30,6 +32,7 @@ cat("There are ", num_class, "unique classes, which are", uniqueClasses)
 classDis<- as.data.frame(table(df$label))
 names(classDis) <- c("label","count") 
 classDis
+barplot(classDis)
 
 #check that they all add up
 sr <- sum(classDis$count) 
@@ -44,6 +47,7 @@ sample_pc <- 0.5
 df_pc <- df[sample(nrow(df), nrow(df) * sample_pc / 100), ]
 nrow(df_pc)
 
+barplot(df$label, col = df$label)
 
 
 #<begin>=====================================
@@ -112,13 +116,15 @@ summary(mdl$results)
 TestRes <- predict(mdl, newdata = reduced[,-5], type="raw")
 confusionMatrix(TestRes, reduced$label)
 
-
-# Set impression as the label
-
+################################
+# Set impression as the label  #
+################################
 drop.cols <- c('Timestamp', 'Photo', "Drink_name", "label")
 reduced.1 <- df %>% select(-one_of(drop.cols))
 reduced.1$Impression <- as.factor(reduced.1$Impression)
 levels(reduced.1$Impression) <- c( "Clearly Alcohol",  "Clearly non-alcoholic", "Probably Alcohol", "Probably non-alcoholic", "Really can't tell" )
+
+barplot(reduced.1$Impression)
 # test three algorithms
 
 ctrl <- trainControl(method="repeatedcv", number=10, repeats=3)
@@ -164,10 +170,9 @@ summary(mdl$results)
 # Accuracy was used to select the optimal model using  the largest value.
 # The final values used for the model were trials = 20, model = tree and winnow = FALSE.
 
-# visualize the resample distributions
-xyplot(mdl,type = c("g", "p", "smooth"))
 
 # Testing the previous model on the testing set	
 TestRes <- predict(mdl, newdata = reduced.1[,-5], type="raw")
 confusionMatrix(TestRes, reduced.1$Impression)
 table(TestRes, reduced.1$Impression)
+
